@@ -1,4 +1,4 @@
-# dtelecom-stt
+# @dtelecom/stt
 
 TypeScript SDK for dTelecom real-time speech-to-text with [x402](https://www.x402.org/) micropayments.
 
@@ -7,13 +7,13 @@ Pay-per-minute STT powered by Whisper and Parakeet, with automatic blockchain pa
 ## Install
 
 ```bash
-npm install dtelecom-stt
+npm install @dtelecom/stt
 ```
 
 ## Quick Start
 
 ```typescript
-import { STTClient } from "dtelecom-stt";
+import { STTClient } from "@dtelecom/stt";
 
 const client = new STTClient({ privateKey: "0x..." });
 
@@ -30,7 +30,7 @@ try {
 ## Real-Time Streaming
 
 ```typescript
-import { STTClient } from "dtelecom-stt";
+import { STTClient } from "@dtelecom/stt";
 
 const client = new STTClient({ privateKey: "0x..." });
 
@@ -123,7 +123,7 @@ English, Russian, German, French, Spanish, Italian, Portuguese, Dutch, Polish, C
 ## Error Handling
 
 ```typescript
-import { PaymentError, SessionExpiredError, ConnectionError } from "dtelecom-stt";
+import { PaymentError, SessionExpiredError, ConnectionError } from "@dtelecom/stt";
 
 try {
   const stream = await client.session({ minutes: 5 }).open();
