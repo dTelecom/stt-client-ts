@@ -1,6 +1,6 @@
 {
   "name": "@dtelecom/stt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript SDK for dTelecom real-time speech-to-text with x402 micropayments",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
