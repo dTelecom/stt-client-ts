@@ -2,7 +2,7 @@
 
 TypeScript SDK for dTelecom real-time speech-to-text with [x402](https://www.x402.org/) micropayments.
 
-Pay-per-minute STT powered by Whisper and Parakeet, with automatic blockchain payments on Base.
+Pay-per-minute STT powered by Whisper and Parakeet, with automatic blockchain payments via USDC on Base or Solana.
 
 ## Install
 
@@ -15,7 +15,10 @@ npm install @dtelecom/stt
 ```typescript
 import { STTClient } from "@dtelecom/stt";
 
+// EVM wallet (Base)
 const client = new STTClient({ privateKey: "0x..." });
+// Or Solana wallet — use async factory
+// const client = await STTClient.create({ privateKey: "base58..." });
 
 const stream = await client.session({ minutes: 5, language: "en" }).open();
 try {
@@ -32,7 +35,7 @@ try {
 ```typescript
 import { STTClient } from "@dtelecom/stt";
 
-const client = new STTClient({ privateKey: "0x..." });
+const client = new STTClient({ privateKey: "0x..." }); // or await STTClient.create({ privateKey: "base58..." })
 
 const stream = await client.session({ minutes: 5, language: "en" }).open();
 
@@ -78,13 +81,16 @@ const info = await client.pricing();
 console.log(`$${info.pricePerMinuteUsd}/min (${info.currency} on ${info.network})`);
 ```
 
-Current pricing: **$0.005/min** (USDC on Base).
+Current pricing: **$0.005/min** (USDC on Base or Solana).
 
 ## API Reference
 
-### `new STTClient({ privateKey, url? })`
+### `new STTClient({ privateKey, url? })` / `STTClient.create({ privateKey, url? })`
 
 Main client. Default URL: `https://x402stt.dtelecom.org`.
+
+- **EVM key** (hex, 0x-prefixed): pays with USDC on Base — use `new STTClient()` or `STTClient.create()`
+- **Solana key** (base58): pays with USDC on Solana — use `await STTClient.create()`
 
 - `session({ minutes?, language?, autoExtend? })` — Create a session context
 - `pricing()` — Get pricing info

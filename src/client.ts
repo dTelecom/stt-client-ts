@@ -1,6 +1,8 @@
 import { x402Client, wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
+import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
+import { createKeyPairSignerFromBytes } from "@solana/kit";
 
 import { ConnectionError, PaymentError, STTError } from "./errors.js";
 import { Stream } from "./stream.js";
@@ -19,30 +21,100 @@ export interface SessionOptions {
   autoExtend?: boolean;
 }
 
+/** Check if a key looks like an EVM private key (32-byte hex, optional 0x). */
+function isEvmKey(key: string): boolean {
+  const k = key.startsWith("0x") ? key.slice(2) : key;
+  return /^[0-9a-fA-F]{64}$/.test(k);
+}
+
+/** Decode a base58 string to bytes. */
+function decodeBase58(str: string): Uint8Array {
+  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const bytes: number[] = [];
+  for (const ch of str) {
+    const idx = ALPHABET.indexOf(ch);
+    if (idx < 0) throw new Error(`Invalid base58 character: ${ch}`);
+    let carry = idx;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) {
+      bytes.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+  // leading zeros
+  for (const ch of str) {
+    if (ch !== "1") break;
+    bytes.push(0);
+  }
+  return new Uint8Array(bytes.reverse());
+}
+
 /**
  * Client for dTelecom real-time speech-to-text with x402 micropayments.
+ *
+ * Accepts either an EVM private key (hex, 0x-prefixed) or a Solana private
+ * key (base58-encoded keypair).  The wallet type is detected automatically.
+ *
+ * For Solana keys, use the async factory `STTClient.create()`.
+ * For EVM keys, both `new STTClient()` and `STTClient.create()` work.
  */
 export class STTClient {
   /** @internal */ readonly _url: string;
   /** @internal */ readonly _wsUrl: string;
-  /** @internal */ readonly _fetchWithPayment: typeof fetch;
+  /** @internal */ _fetchWithPayment: typeof fetch;
 
+  /**
+   * Sync constructor — works for EVM keys only.
+   * For Solana keys, use `STTClient.create()`.
+   */
   constructor(options: STTClientOptions) {
     this._url = (options.url ?? DEFAULT_URL).replace(/\/+$/, "");
     this._wsUrl = this._url
       .replace("https://", "wss://")
       .replace("http://", "ws://");
 
-    const signer = privateKeyToAccount(
-      (options.privateKey.startsWith("0x")
-        ? options.privateKey
-        : `0x${options.privateKey}`) as `0x${string}`
-    );
+    if (isEvmKey(options.privateKey)) {
+      const signer = privateKeyToAccount(
+        (options.privateKey.startsWith("0x")
+          ? options.privateKey
+          : `0x${options.privateKey}`) as `0x${string}`
+      );
+      const client = new x402Client();
+      registerExactEvmScheme(client, { signer });
+      this._fetchWithPayment = wrapFetchWithPayment(fetch, client);
+    } else {
+      // Solana key — defer setup to async create()
+      this._fetchWithPayment = fetch; // placeholder
+      this._pendingKey = options.privateKey;
+    }
+  }
 
+  /** @internal */ private _pendingKey?: string;
+
+  /** @internal */
+  private async _initSolana(key: string): Promise<void> {
+    const keyBytes = decodeBase58(key);
+    const signer = await createKeyPairSignerFromBytes(keyBytes);
     const client = new x402Client();
-    registerExactEvmScheme(client, { signer });
-
+    registerExactSvmScheme(client, { signer });
     this._fetchWithPayment = wrapFetchWithPayment(fetch, client);
+  }
+
+  /**
+   * Async factory — works for both EVM and Solana keys.
+   * Required for Solana keys (Solana signer creation is async).
+   */
+  static async create(options: STTClientOptions): Promise<STTClient> {
+    const instance = new STTClient(options);
+    if (instance._pendingKey) {
+      await instance._initSolana(instance._pendingKey);
+      instance._pendingKey = undefined;
+    }
+    return instance;
   }
 
   /**
