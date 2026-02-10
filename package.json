@@ -1,0 +1,35 @@
+{
+  "name": "dtelecom-stt",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for dTelecom real-time speech-to-text with x402 micropayments",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": [
+    "stt",
+    "speech-to-text",
+    "x402",
+    "micropayments",
+    "realtime"
+  ],
+  "author": "dTelecom <dev@dtelecom.org>",
+  "license": "MIT",
+  "dependencies": {
+    "@x402/evm": "^2.0.0",
+    "@x402/fetch": "^2.0.0",
+    "viem": "^2.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}
