@@ -1,5 +1,12 @@
 # @dtelecom/stt
 
+## Contract scope and current gateway
+
+This package documents the legacy `x402stt.dtelecom.org` STT payment/session protocol. Its URLs, rates and automatic session-payment behavior below belong to that contract; they are not the current multi-service gateway contract. This documentation update does not verify or retire the legacy deployment.
+
+For new integrations use [x402-client](https://github.com/dTelecom/x402-client) with [x402.dtelecom.org](https://x402.dtelecom.org/docs.md): prepaid wallet-authenticated live STT ($0.004/connected session minute), optional partials/Smart Turn, and a separate uploaded-file transcription/diarization API ($0.003/decoded minute, rounded to started seconds). This legacy client's file helper streams audio through live STT; it is not the new asynchronous batch API. Do not substitute the new base URL into this client without migrating authentication, session and event handling. The new SDK does not automatically buy credits or retry inference.
+
+
 TypeScript SDK for dTelecom real-time speech-to-text with [x402](https://www.x402.org/) micropayments.
 
 Pay-per-minute STT powered by Whisper and Parakeet, with automatic blockchain payments via USDC on Base or Solana.
